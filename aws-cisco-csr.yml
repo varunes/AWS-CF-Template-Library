@@ -1,0 +1,153 @@
+---
+Description: 'Cisco Cloud Services Router: CSR1000V - Security Technology Package
+  for Maximum Performance --AWSMP::dbfcb230-402e-49cc-857f-dacb4db08d34::a738c277-bed6-4d48-559e-60ecba29c017--'
+Parameters:
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: VPCIDtolaunchinto
+  SubnetPublic:
+    Description: Public Subnet
+    Type: AWS::EC2::Subnet::Id
+  SubnetPrivate:
+    Description: Private Subnet
+    Type: AWS::EC2::Subnet::Id
+  InstanceType:
+    Description: TypeofEC2instancetouse
+    Type: String
+    Default: c4.large
+    AllowedValues:
+    - c5.large
+    - c4.large
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: InstanceswilllaunchwiththisKeyPair
+  CidrIp1:
+    Description: CIDR for Security Groups source IP
+    Type: String
+    AllowedPattern: "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/[0-9]{1,2}"
+    ConstraintDescription: 'Please specify a valid source IP range. Eg: 0.0.0.0/0'
+  CidrIp2:
+    Description: CIDR for port 22 for SSH
+    Type: String
+    AllowedPattern: "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/[0-9]{1,2}"
+    ConstraintDescription: 'Please specify a valid source IP range. Eg: 0.0.0.0/0'
+Mappings:
+  AWSInstanceType2Arch:
+    c5.large:
+      Arch: '64'
+    c4.large:
+      Arch: '64'
+  AWSRegionArch2AMI:
+    us-east-1:
+      '64': ami-0c191b50cddbbae59
+Resources:
+  SecurityGroupPublic:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for ENI Public
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp:
+          Ref: CidrIp2
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp:
+          Ref: CidrIp1
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp:
+          Ref: CidrIp1
+      - IpProtocol: udp
+        FromPort: '67'
+        ToPort: '67'
+        CidrIp:
+          Ref: CidrIp1
+      - IpProtocol: udp
+        FromPort: '123'
+        ToPort: '123'
+        CidrIp:
+          Ref: CidrIp1
+      - IpProtocol: udp
+        FromPort: '161'
+        ToPort: '161'
+        CidrIp:
+          Ref: CidrIp1
+      - IpProtocol: udp
+        FromPort: '500'
+        ToPort: '500'
+        CidrIp:
+          Ref: CidrIp1
+      - IpProtocol: udp
+        FromPort: '4500'
+        ToPort: '4500'
+        CidrIp:
+          Ref: CidrIp1
+  ENIPublic:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId:
+        Ref: SubnetPublic
+      Description: ENIPublic
+      GroupSet:
+      - Ref: SecurityGroupPublic
+      SourceDestCheck: 'false'
+  SecurityGroupforENIPrivate:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for ENI Private
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: "-1"
+        CidrIp:
+          Ref: CidrIp1
+  ENIPrivate:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId:
+        Ref: SubnetPrivate
+      Description: ENIPrivate
+      GroupSet:
+      - Ref: SecurityGroupforENIPrivate
+      SourceDestCheck: 'false'
+  TwoInterfaceCSR:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+      - Key: Name
+        Value: cisco CSR
+      InstanceType:
+        Ref: InstanceType
+      KeyName:
+        Ref: KeyName
+      NetworkInterfaces:
+      - NetworkInterfaceId:
+          Ref: ENIPublic
+        DeviceIndex: '0'
+      - NetworkInterfaceId:
+          Ref: ENIPrivate
+        DeviceIndex: '1'
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionArch2AMI
+        - Ref: AWS::Region
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - Ref: InstanceType
+          - Arch
+Outputs:
+  URL:
+    Description: URL to the Gateway portal
+    Value:
+      Fn::Join:
+      - ''
+      - - https://
+        - Fn::GetAtt:
+          - ENIPublic
+          - PrimaryPrivateIpAddress
