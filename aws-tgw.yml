@@ -1,0 +1,56 @@
+---
+Description: AWS Transit Gateway
+Parameters:
+  VPCId:
+    Type: String
+    Description: VPC Id
+    Default: 
+  PrivateAzASubnetId:
+    Type: String
+    Description: Az A app1 Subnet in prod VPC
+    Default: 
+      
+  VPNAddress:
+    Type: String
+    Description: VPN endpoint
+    Default: 
+Resources:
+  CustomerGateway:
+    Type: AWS::EC2::CustomerGateway
+    Properties:
+      Type: ipsec.1
+      BgpAsn: '65000'
+      IpAddress:
+        Ref: VPNAddress
+  TransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      AmazonSideAsn: 65011
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      Description: AWS Transit Gateway
+      DnsSupport: enable
+      VpnEcmpSupport: enable
+  TransitGatewayConsAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      SubnetIds:
+      - Ref: PrivateAzASubnetId
+      TransitGatewayId:
+        Ref: TransitGateway
+      VpcId:
+        Ref: VPCId        
+    
+Outputs:
+  CustomerGateway:
+    Description: CustomerGateway Id
+    Value:
+      Ref: CustomerGateway
+    Export:
+      Name: TransitGateway-CustomerGatewayId
+  TransitGateway:
+    Description: TransitGateway Id
+    Value:
+      Ref: TransitGateway
+    Export:
+      Name: TransitGateway-TransitGatewayId
