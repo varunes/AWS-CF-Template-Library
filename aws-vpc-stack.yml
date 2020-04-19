@@ -1,0 +1,1073 @@
+---
+Description: Base VPC Infrastructure
+Mappings:
+  RegionToAz:
+    ap-northeast-1:
+      AZ:
+      - ap-northeast-1a
+      - ap-northeast-1c
+      - ap-northeast-1d
+      SHORTREGION: apn1
+    ca-central-1:
+      AZ:
+      - ca-central-1a
+      - ca-central-1b
+      SHORTREGION: cac1
+    eu-central-1:
+      AZ:
+      - eu-central-1a
+      - eu-central-1b
+      - eu-central-1c
+      SHORTREGION: euc1
+    eu-west-1:
+      AZ:
+      - eu-west-1a
+      - eu-west-1b
+      - eu-west-1c
+      SHORTREGION: euw1
+    eu-west-2:
+      AZ:
+      - eu-west-2a
+      - eu-west-2b
+      SHORTREGION: euw2
+    us-east-1:
+      AZ:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      SHORTREGION: use1
+Outputs:
+  app1RouteTableId:
+    Description: app1 RouteTable Id
+    Value:
+      Ref: app1RouteTable
+  app1SubnetId:
+    Description: app1 SubnetId
+    Value:
+      Ref: app1Subnet
+  app2RouteTableId:
+    Description: app2 RouteTable Id
+    Value:
+      Ref: app2RouteTable
+  app2SubnetId:
+    Description: app2 SubnetId
+    Value:
+      Ref: app2Subnet
+  app3RouteTableId:
+    Description: app3 RouteTable Id
+    Value:
+      Ref: app3RouteTable
+  app3SubnetId:
+    Description: app3 SubnetId
+    Value:
+      Ref: app3Subnet
+  appAclId:
+    Description: app NACL Id
+    Value:
+      Ref: appAcl
+  appSubnetIds:
+    Description: app SubnetIds Commaseparated
+    Value:
+      Fn::Join:
+      - ","
+      - - Ref: app3Subnet
+        - Ref: app2Subnet
+        - Ref: app1Subnet
+  cidr:
+    Value:
+      Fn::GetAtt:
+      - VPC
+      - CidrBlock
+  db1RouteTableId:
+    Description: db1 RouteTable Id
+    Value:
+      Ref: db1RouteTable
+  db1SubnetId:
+    Description: db1 SubnetId
+    Value:
+      Ref: db1Subnet
+  db2RouteTableId:
+    Description: db2 RouteTable Id
+    Value:
+      Ref: db2RouteTable
+  db2SubnetId:
+    Description: db2 SubnetId
+    Value:
+      Ref: db2Subnet
+  db3RouteTableId:
+    Description: db3 RouteTable Id
+    Value:
+      Ref: db3RouteTable
+  db3SubnetId:
+    Description: db3 SubnetId
+    Value:
+      Ref: db3Subnet
+  dbAclId:
+    Description: db NACL Id
+    Value:
+      Ref: dbAcl
+  dbSubnetIds:
+    Description: db SubnetIds Commaseparated
+    Value:
+      Fn::Join:
+      - ","
+      - - Ref: db1Subnet
+        - Ref: db3Subnet
+        - Ref: db2Subnet
+  dhcOptions:
+    Description: DHCP Options Set ID
+    Value:
+      Ref: DHCPOptionsWithDNS
+  environment:
+    Value: cons
+  igwId:
+    Value:
+      Ref: igw
+  natGw1Id:
+    Value:
+      Ref: natGw1
+  natGw1natGwEIP:
+    Value:
+      Fn::GetAtt:
+      - natGw1EIP
+      - AllocationId
+  public1RouteTableId:
+    Description: public1 RouteTable Id
+    Value:
+      Ref: public1RouteTable
+  public1SubnetId:
+    Description: public1 SubnetId
+    Value:
+      Ref: public1Subnet
+  public2RouteTableId:
+    Description: public2 RouteTable Id
+    Value:
+      Ref: public2RouteTable
+  public2SubnetId:
+    Description: public2 SubnetId
+    Value:
+      Ref: public2Subnet
+  public3RouteTableId:
+    Description: public3 RouteTable Id
+    Value:
+      Ref: public3RouteTable
+  public3SubnetId:
+    Description: public3 SubnetId
+    Value:
+      Ref: public3Subnet
+  publicAclId:
+    Description: public NACL Id
+    Value:
+      Ref: publicAcl
+  publicSubnetIds:
+    Description: public SubnetIds Commaseparated
+    Value:
+      Fn::Join:
+      - ","
+      - - Ref: public2Subnet
+        - Ref: public3Subnet
+        - Ref: public1Subnet
+  vpcId:
+    Value:
+      Ref: VPC
+Parameters:
+  Environment:
+    AllowedValues:
+    - dev
+    - int
+    - cons
+    - prod
+    Description: Value for Environment tag
+    MinLength: '1'
+    Type: String
+  Owner:
+    Default: Test
+    Description: Value for Owner
+    Type: String
+Resources:
+  DHCPAssociationWithDNS:
+    Properties:
+      DhcpOptionsId:
+        Ref: DHCPOptionsWithDNS
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::VPCDHCPOptionsAssociation
+  DHCPOptionsWithDNS:
+    Properties:
+      DomainName: us-east-1.compute.internal
+      DomainNameServers:
+      - AmazonProvidedDNS
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - dhcp
+    Type: AWS::EC2::DHCPOptions
+  S3Endpoints:
+    Properties:
+      RouteTableIds:
+      - Ref: public2RouteTable
+      - Ref: public3RouteTable
+      - Ref: public1RouteTable
+      - Ref: app3RouteTable
+      - Ref: app2RouteTable
+      - Ref: app1RouteTable
+      - Ref: db1RouteTable
+      - Ref: db3RouteTable
+      - Ref: db2RouteTable
+      ServiceName:
+        Fn::Join:
+        - "."
+        - - com
+          - amazonaws
+          - Ref: AWS::Region
+          - s3
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::VPCEndpoint
+  VPC:
+    Properties:
+      CidrBlock: 
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - vpc
+    Type: AWS::EC2::VPC
+  app1AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: appAcl
+      SubnetId:
+        Ref: app1Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  app1DefaultRoute:
+    DependsOn:
+    - natGw1
+    - app1RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: natGw1
+      RouteTableId:
+        Ref: app1RouteTable
+    Type: AWS::EC2::Route
+  app1RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: app1RouteTable
+      SubnetId:
+        Ref: app1Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  app1RouteTable:
+    DependsOn: natGw1
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app1
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  app1Subnet:
+    Properties:
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.9.20.0/24
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app1
+            - sub
+      - Key: Tier
+        Value: app
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  app2AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: appAcl
+      SubnetId:
+        Ref: app2Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  app2DefaultRoute:
+    DependsOn:
+    - natGw1
+    - app2RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: natGw1
+      RouteTableId:
+        Ref: app2RouteTable
+    Type: AWS::EC2::Route
+  app2RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: app2RouteTable
+      SubnetId:
+        Ref: app2Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  app2RouteTable:
+    DependsOn: natGw1
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app2
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  app2Subnet:
+    Properties:
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.9.21.0/24
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app2
+            - sub
+      - Key: Tier
+        Value: app
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  app3AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: appAcl
+      SubnetId:
+        Ref: app3Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  app3DefaultRoute:
+    DependsOn:
+    - natGw1
+    - app3RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: natGw1
+      RouteTableId:
+        Ref: app3RouteTable
+    Type: AWS::EC2::Route
+  app3RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: app3RouteTable
+      SubnetId:
+        Ref: app3Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  app3RouteTable:
+    DependsOn: natGw1
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app3
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  app3Subnet:
+    Properties:
+      AvailabilityZone: us-east-1c
+      CidrBlock: 
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app3
+            - sub
+      - Key: Tier
+        Value: app
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  appAcl:
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - app
+            - acl
+      - Key: Tier
+        Value: db
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::NetworkAcl
+  appInboundAclEntry:
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: 'false'
+      NetworkAclId:
+        Ref: appAcl
+      Protocol: "-1"
+      RuleAction: allow
+      RuleNumber: '100'
+    Type: AWS::EC2::NetworkAclEntry
+  appOutBoundAclEntry:
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: 'true'
+      NetworkAclId:
+        Ref: appAcl
+      Protocol: "-1"
+      RuleAction: allow
+      RuleNumber: '100'
+    Type: AWS::EC2::NetworkAclEntry
+  db1AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: dbAcl
+      SubnetId:
+        Ref: db1Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  db1DefaultRoute:
+    DependsOn:
+    - natGw1
+    - db1RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: natGw1
+      RouteTableId:
+        Ref: db1RouteTable
+    Type: AWS::EC2::Route
+  db1RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: db1RouteTable
+      SubnetId:
+        Ref: db1Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  db1RouteTable:
+    DependsOn: natGw1
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db1
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  db1Subnet:
+    Properties:
+      AvailabilityZone: us-east-1a
+      CidrBlock: 
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db1
+            - sub
+      - Key: Tier
+        Value: db
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  db2AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: dbAcl
+      SubnetId:
+        Ref: db2Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  db2DefaultRoute:
+    DependsOn:
+    - natGw1
+    - db2RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: natGw1
+      RouteTableId:
+        Ref: db2RouteTable
+    Type: AWS::EC2::Route
+  db2RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: db2RouteTable
+      SubnetId:
+        Ref: db2Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  db2RouteTable:
+    DependsOn: natGw1
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db2
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  db2Subnet:
+    Properties:
+      AvailabilityZone: us-east-1b
+      CidrBlock: 
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db2
+            - sub
+      - Key: Tier
+        Value: db
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  db3AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: dbAcl
+      SubnetId:
+        Ref: db3Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  db3DefaultRoute:
+    DependsOn:
+    - natGw1
+    - db3RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: natGw1
+      RouteTableId:
+        Ref: db3RouteTable
+    Type: AWS::EC2::Route
+  db3RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: db3RouteTable
+      SubnetId:
+        Ref: db3Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  db3RouteTable:
+    DependsOn: natGw1
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db3
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  db3Subnet:
+    Properties:
+      AvailabilityZone: us-east-1c
+      CidrBlock: 
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db3
+            - sub
+      - Key: Tier
+        Value: db
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  dbAcl:
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - db
+            - acl
+      - Key: Tier
+        Value: db
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::NetworkAcl
+  dbInboundAclEntry:
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: 'false'
+      NetworkAclId:
+        Ref: dbAcl
+      Protocol: "-1"
+      RuleAction: allow
+      RuleNumber: '100'
+    Type: AWS::EC2::NetworkAclEntry
+  dbOutBoundAclEntry:
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: 'true'
+      NetworkAclId:
+        Ref: dbAcl
+      Protocol: "-1"
+      RuleAction: allow
+      RuleNumber: '100'
+    Type: AWS::EC2::NetworkAclEntry
+  igw:
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - igw
+    Type: AWS::EC2::InternetGateway
+  igwAttach:
+    Properties:
+      InternetGatewayId:
+        Ref: igw
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::VPCGatewayAttachment
+  natGw1:
+    DependsOn: igwAttach
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - natGw1EIP
+        - AllocationId
+      SubnetId:
+        Ref: public2Subnet
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - natGw1
+    Type: AWS::EC2::NatGateway
+  natGw1EIP:
+    Properties:
+      Domain: vpc
+    Type: AWS::EC2::EIP
+  public1AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: publicAcl
+      SubnetId:
+        Ref: public1Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  public1DefaultRoute:
+    DependsOn:
+    - igw
+    - public1RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: igw
+      RouteTableId:
+        Ref: public1RouteTable
+    Type: AWS::EC2::Route
+  public1RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: public1RouteTable
+      SubnetId:
+        Ref: public1Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  public1RouteTable:
+    DependsOn: igw
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public1
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  public1Subnet:
+    Properties:
+      AvailabilityZone: us-east-1a
+      CidrBlock: 
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public1
+            - sub
+      - Key: Tier
+        Value: public
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  public2AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: publicAcl
+      SubnetId:
+        Ref: public2Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  public2DefaultRoute:
+    DependsOn:
+    - igw
+    - public2RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: igw
+      RouteTableId:
+        Ref: public2RouteTable
+    Type: AWS::EC2::Route
+  public2RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: public2RouteTable
+      SubnetId:
+        Ref: public2Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  public2RouteTable:
+    DependsOn: igw
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public2
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  public2Subnet:
+    Properties:
+      AvailabilityZone: us-east-1b
+      CidrBlock: 
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public2
+            - sub
+      - Key: Tier
+        Value: public
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  public3AclAssociation:
+    Properties:
+      NetworkAclId:
+        Ref: publicAcl
+      SubnetId:
+        Ref: public3Subnet
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+  public3DefaultRoute:
+    DependsOn:
+    - igw
+    - public3RouteTable
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: igw
+      RouteTableId:
+        Ref: public3RouteTable
+    Type: AWS::EC2::Route
+  public3RTAssoc:
+    Properties:
+      RouteTableId:
+        Ref: public3RouteTable
+      SubnetId:
+        Ref: public3Subnet
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  public3RouteTable:
+    DependsOn: igw
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public3
+            - rtb
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::RouteTable
+  public3Subnet:
+    Properties:
+      AvailabilityZone: us-east-1c
+      CidrBlock: 10.9.18.0/24
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public3
+            - sub
+      - Key: Tier
+        Value: public
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::Subnet
+  publicAcl:
+    Properties:
+      Tags:
+      - Key: Environment
+        Value:
+          Ref: Environment
+      - Key: Owner
+        Value:
+          Ref: Owner
+      - Key: Version
+        Value: 2.0.0
+      - Key: Name
+        Value:
+          Fn::Join:
+          - "-"
+          - - public
+            - acl
+      - Key: Tier
+        Value: db
+      VpcId:
+        Ref: VPC
+    Type: AWS::EC2::NetworkAcl
+  publicInboundAclEntry:
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: 'false'
+      NetworkAclId:
+        Ref: publicAcl
+      Protocol: "-1"
+      RuleAction: allow
+      RuleNumber: '100'
+    Type: AWS::EC2::NetworkAclEntry
+  publicOutBoundAclEntry:
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Egress: 'true'
+      NetworkAclId:
+        Ref: publicAcl
+      Protocol: "-1"
+      RuleAction: allow
+      RuleNumber: '100'
+    Type: AWS::EC2::NetworkAclEntry
