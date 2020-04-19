@@ -303,7 +303,7 @@ Resources:
   app1Subnet:
     Properties:
       AvailabilityZone: us-east-1a
-      CidrBlock: 10.9.20.0/24
+      CidrBlock:
       MapPublicIpOnLaunch: 'false'
       Tags:
       - Key: Environment
@@ -374,7 +374,7 @@ Resources:
   app2Subnet:
     Properties:
       AvailabilityZone: us-east-1b
-      CidrBlock: 10.9.21.0/24
+      CidrBlock:
       MapPublicIpOnLaunch: 'false'
       Tags:
       - Key: Environment
@@ -1007,7 +1007,7 @@ Resources:
   public3Subnet:
     Properties:
       AvailabilityZone: us-east-1c
-      CidrBlock: 10.9.18.0/24
+      CidrBlock: 
       MapPublicIpOnLaunch: 'true'
       Tags:
       - Key: Environment
