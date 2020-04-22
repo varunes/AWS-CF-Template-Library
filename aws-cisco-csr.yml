@@ -1,6 +1,5 @@
 ---
-Description: 'Cisco Cloud Services Router: CSR1000V - Security Technology Package
-  for Maximum Performance --AWSMP::dbfcb230-402e-49cc-857f-dacb4db08d34::a738c277-bed6-4d48-559e-60ecba29c017--'
+Description: 'Cisco Cloud Services Router: CSR1000V - Security'
 Parameters:
   VPC:
     Type: AWS::EC2::VPC::Id
